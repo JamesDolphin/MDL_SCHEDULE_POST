@@ -43,8 +43,10 @@ const getMatches = (dateNow, id) => new Promise((resolve, reject) => {
         });
 
       for (let x = 0; x < matches.length; x += 1) {
+        console.log((`${dateNow}   ${JSON.stringify(matches[x].time)} ${matches[x].teams}`));
         matchArray.push(`${dateNow}   ${JSON.stringify(matches[x].time)} ${matches[x].teams}`);
       }
+
       resolve();
     });
   // reject();
