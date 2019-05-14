@@ -8,6 +8,7 @@ const regions = [6, 1, 2];
 let counter = 0;
 
 const sheetWidth = Number(26);
+const sheetTimer = Number(1000 * 60 * 10); // 5 mins
 
 require('dotenv').config();
 
@@ -42,8 +43,7 @@ const getMatches = (dateNow, id) => new Promise((resolve, reject) => {
         });
 
       for (let x = 0; x < matches.length; x += 1) {
-        console.log(`${JSON.stringify(matches[x].time)} ${matches[x].teams}`);
-        matchArray.push(`${JSON.stringify(matches[x].time)} ${matches[x].teams}`);
+        matchArray.push(`${dateNow}   ${JSON.stringify(matches[x].time)} ${matches[x].teams}`);
       }
       resolve();
     });
@@ -71,9 +71,7 @@ const doAllDates = async (id) => {
     },
     function getInfoAndWorksheets(step) {
       doc.getInfo((err, info) => {
-        console.log(`Loaded doc: ${info.title} by ${info.author.email}`);
         sheet = info.worksheets[counter];
-        console.log(`sheet 1: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`);
         step();
       });
     },
@@ -103,5 +101,11 @@ const doAllDates = async (id) => {
     }
   });
 };
+
+
+const updateTime = sheetTimer; // 5 mins
+setInterval(() => {
+  doAllDates(regions[0]);
+}, updateTime);
 
 doAllDates(regions[0]);
