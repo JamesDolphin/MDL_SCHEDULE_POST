@@ -2,7 +2,10 @@ const cheerio = require('cheerio');
 const cloudscraper = require('cloudscraper');
 const GoogleSpreadsheet = require('google-spreadsheet');
 const async = require('async');
-const creds = require('../auth/auth.json');
+const creds = require('./auth.json');
+require('dotenv').config();
+
+const doc = new GoogleSpreadsheet(process.env.SHEETID);
 
 const regions = [6, 1, 2];
 let counter = 0;
@@ -10,14 +13,11 @@ let counter = 0;
 const sheetWidth = Number(26);
 const sheetTimer = Number(1000 * 60 * 10); // 5 mins
 
-require('dotenv').config();
-
-// spreadsheet key is the long id in the sheets URL
-const doc = new GoogleSpreadsheet(process.env.SHEETID);
 let sheet;
 let matchArray = [];
 
 
+// scrapes all relevant data from given url and pushes a formatted string into matchArray
 const getMatches = (dateNow, id) => new Promise((resolve, reject) => {
   cloudscraper({
     url: 'https://play.esea.net/index.php',
@@ -38,15 +38,14 @@ const getMatches = (dateNow, id) => new Promise((resolve, reject) => {
           const table = $(_table);
           return {
             time: table.find('th').first().text().trim(),
-            teams: table.find('td a').toArray().map(a => $(a).text()).filter(n => n),
+            teams: table.find('td a').toArray().map(a => $(a).text()).filter(n => n)
+              .join(' vs '),
           };
         });
 
       for (let x = 0; x < matches.length; x += 1) {
-        console.log((`${dateNow}   ${JSON.stringify(matches[x].time)} ${matches[x].teams}`));
-        matchArray.push(`${dateNow}   ${JSON.stringify(matches[x].time)} ${matches[x].teams}`);
+        matchArray.push(`${dateNow}   ${JSON.stringify(matches[x].time)}   ${matches[x].teams}`);
       }
-
       resolve();
     });
   // reject();
@@ -54,11 +53,12 @@ const getMatches = (dateNow, id) => new Promise((resolve, reject) => {
 
 
 const doAllDates = async (id) => {
+  matchArray = [];
   const max = regions.length - 1;
-  const seasonEnd = new Date(2019, 4, 30);
+  const seasonEnd = new Date(2019, 5, 30);
 
-  // for (let x = 0; x < regions.length; x = x + 1 ) {}
 
+  // loops all dates within hard coded times and pulls match information
   for (let d = new Date(2019, 3, 28); d <= seasonEnd; d.setDate(d.getDate() + 1)) {
     const date = new Date(d);
     const dateFormatted = (`${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`);
@@ -66,6 +66,7 @@ const doAllDates = async (id) => {
   }
 
 
+  // pulls information from the matchArray and line by line loads the sheet with new cell information
   async.series([
     function setAuth(step) {
       // see notes below for authentication instructions!
@@ -91,7 +92,6 @@ const doAllDates = async (id) => {
         counter += 1;
         if (counter <= max) {
           doAllDates(regions[counter]);
-          matchArray = [];
         } else {
           counter = 0;
         }
@@ -104,7 +104,7 @@ const doAllDates = async (id) => {
   });
 };
 
-
+// sets the interval at which to update the google sheets
 const updateTime = sheetTimer; // 5 mins
 setInterval(() => {
   doAllDates(regions[0]);
