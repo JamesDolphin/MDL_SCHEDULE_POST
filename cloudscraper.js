@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const doc = new GoogleSpreadsheet(process.env.SHEETID);
 
-const regions = [6, 1, 2];
+const regions = [6];
 let counter = 0;
 
 const sheetWidth = Number(26);
@@ -55,11 +55,10 @@ const getMatches = (dateNow, id) => new Promise((resolve, reject) => {
 const doAllDates = async (id) => {
   matchArray = [];
   const max = regions.length - 1;
-  const seasonEnd = new Date(2019, 5, 30);
-
+  const seasonEnd = new Date(2019, 11, 1);
 
   // loops all dates within hard coded times and pulls match information
-  for (let d = new Date(2019, 3, 28); d <= seasonEnd; d.setDate(d.getDate() + 1)) {
+  for (let d = new Date(2019, 8, 1); d <= seasonEnd; d.setDate(d.getDate() + 1)) {
     const date = new Date(d);
     const dateFormatted = (`${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`);
     await getMatches(dateFormatted, id);
@@ -88,6 +87,7 @@ const doAllDates = async (id) => {
           cells[(x + 1) * sheetWidth].value = matchArray[x];
         }
         sheet.bulkUpdateCells(cells);
+
         step();
         counter += 1;
         if (counter <= max) {
